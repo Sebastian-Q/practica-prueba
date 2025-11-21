@@ -1,0 +1,61 @@
+# Aqui se configuran los contenedores
+services:
+  database:
+    image: mysql:8
+    container_name: practica-database
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: practica-prueba
+    ports:
+      - "3307:3306"
+    networks:
+      - practica-net
+    volumes:
+      - practica-volume:/var/lib/mysql
+
+  frontend:
+    image: client:v1.0
+    build:
+      context: ./client
+      args:
+        API_HOST: localhost
+        API_PORT: 8081
+        API_BASE: /practica-api
+    container_name: practica-client
+    ports:
+      - "3000:80"
+    networks:
+      - practica-net
+    depends_on:
+      - database
+
+  backend:
+    image: server:v1.0
+    build:
+      context: ./server
+    container_name: practica-server
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: practica-prueba
+      DB_USER: root
+      DB_PASS: root
+    ports:
+      - "8081:8080"
+    networks:
+      - practica-net
+    depends_on:
+      - frontend
+
+# Aqui se configuran las redes donde se comunican los contenedores
+# docker network create --driver bridge adj-net
+networks:
+  practica-net:
+    external: true
+
+# Aqui se configuran los volumenes que ocupan los contenedores
+# docker volume create adj-volume
+volumes:
+  practica-volume:
+    external: true
